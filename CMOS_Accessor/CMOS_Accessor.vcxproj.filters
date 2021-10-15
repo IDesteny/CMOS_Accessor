@@ -23,4 +23,15 @@
       <Filter>Driver Files</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="OIctl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AddrHolder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DriverCfg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>

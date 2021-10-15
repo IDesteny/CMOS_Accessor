@@ -2,11 +2,11 @@
 #include <tchar.h>
 #include <stdio.h>
 
-#define IOCTL(CODE) CTL_CODE(FILE_DEVICE_UNKNOWN, 0x800 + CODE, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define GETTER IOCTL(0x01)
-#define SETTER IOCTL(0x02)
+#include "..\CMOS_Accessor\OIctl.h"
+#include "..\CMOS_Accessor\AddrHolder.h"
+#include "..\CMOS_Accessor\DriverCfg.h"
 
-#define DEVICE_PATH _T("\\\\.\\exampledevice")
+#define DEVICE_PATH _T("\\\\.\\") DEVICE_NAME
 #define DOCS_PATH _T("http://philipstorr.id.au/pcbook/book5/cmoslist.htm")
 
 

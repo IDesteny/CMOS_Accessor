@@ -1,14 +1,12 @@
 #include <ntddk.h>
 #include <tchar.h>
-
-#define IOCTL(CODE) CTL_CODE(FILE_DEVICE_UNKNOWN, 0x800 + CODE, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define GETTER IOCTL(0x01)
-#define SETTER IOCTL(0x02)
+#include "OIctl.h"
+#include "AddrHolder.h"
+#include "DriverCfg.h"
 
 #define ERROR_LOG(msg) DbgPrint("ERROR! === " msg " ===")
 #define SUCCESS_LOG(msg) DbgPrint("SUCCESS! === " msg " ===")
 
-#define DEVICE_NAME _T("exampledevice")
 #define DEVICE_PATH _T("\\Device\\") DEVICE_NAME
 #define	SYM_LINK_NAME _T("\\DosDevices\\") DEVICE_NAME
 
