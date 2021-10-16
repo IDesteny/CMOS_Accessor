@@ -7,12 +7,10 @@
 #include "..\CMOS_Accessor\DriverCfg.h"
 
 #define DEVICE_PATH _T("\\\\.\\") DEVICE_NAME
-#define DOCS_PATH _T("http://philipstorr.id.au/pcbook/book5/cmoslist.htm")
 
-
-INT WINAPI _tmain(CONST INT argc, LPCTSTR argv[])
+INT WINAPI _tmain(INT argc, LPCTSTR argv[])
 {
-	CONST HANDLE hDriver = CreateFile(
+	HANDLE hDriver = CreateFile(
 		DEVICE_PATH,
 		GENERIC_READ | GENERIC_WRITE,
 		FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -23,85 +21,124 @@ INT WINAPI _tmain(CONST INT argc, LPCTSTR argv[])
 
 	if (hDriver == INVALID_HANDLE_VALUE)
 	{
-		_ftprintf_s(stderr, _T("ERROR! 'CreateFile()' code=%d"), GetLastError());
+		_ftprintf_s(stderr, _T("ERROR! 'CreateFile()' code=%lu\n"), GetLastError());
 		return EXIT_FAILURE;
 	}
 
-	_putts(_T("=== CMOS memory accessor ==="));
+	_tprintf(_T("=== CMOS memory accessor ===\n"));
 
 	while (TRUE)
 	{
 		_tprintf(_T("> "));
 
-		TCHAR cmd[16] = { 0 };
-		_tscanf_s(_T("%s"), cmd, (UINT)(sizeof cmd / sizeof(TCHAR)));
+		TCHAR cmd[4] = { 0 };
+		_tscanf_s(_T("%s"), cmd, (UINT)ARRAYSIZE(cmd));
 
-		if (!_tcscmp(cmd, _T("help")))
+		if (!_tcscmp(cmd, _T("hlp")))
 		{
-			_putts(_T("get <addr>"));
-			_putts(_T("set <addr> <val>"));
-			_putts(_T("doc"));
-			_putts(_T("cls"));
-			continue;
-		}
-
-		if (!_tcscmp(cmd, _T("doc")))
-		{
-			ShellExecute(0, 0, DOCS_PATH, 0, 0, SW_SHOW);
+			_tprintf(_T("get <addr>\n"));
+			_tprintf(_T("set <addr> <val>\n"));
+			_tprintf(_T("cls\n"));
+			_tprintf(_T("ext\n"));
 			continue;
 		}
 
 		if (!_tcscmp(cmd, _T("cls")))
 		{
 			_tsystem(_T("cls"));
-			_putts(_T("=== CMOS memory accessor ==="));
+			_tprintf(_T("=== CMOS memory accessor ===\n"));
 			continue;
+		}
+
+		if (!_tcscmp(cmd, _T("ext")))
+		{
+			break;
 		}
 
 		if (!_tcscmp(cmd, _T("get")))
 		{
-			UINT8 addr, data;
-			_tscanf_s(_T("%hhx"), &addr);
+			TCHAR addr[16] = { 0 };
+			_tscanf_s(_T("%s"), addr, (UINT)ARRAYSIZE(addr));
 
-			DWORD ret = 0;
-			CONST BOOL bResultDeviceIoControl = DeviceIoControl(
-				hDriver, GETTER,
-				&addr, sizeof addr,
-				&data, sizeof data,
-				&ret, NULL);
+			PTCHAR correctAddr;
+			ADDRRES_HOLDER addressHolder;
 
-			_tprintf(_T("data: %hhx\n"), data);
+			addressHolder.addr = (UINT8)_tcstol(addr, &correctAddr, 16);
+			if (*correctAddr || addressHolder.addr > 0x3f)
+			{
+				_tprintf(_T("Invalid address\n"));
+				continue;
+			}
+
+			DWORD ret;
+			if (!DeviceIoControl(
+				hDriver, GET_DATA_BY_ADDR,
+				&addressHolder.addr, sizeof addressHolder.addr,
+				&addressHolder.data, sizeof addressHolder.data,
+				&ret, NULL))
+			{
+				_ftprintf_s(stderr, _T("ERROR! 'DeviceIoControl()' code=%lu\n"), GetLastError());
+				return EXIT_FAILURE;
+			}
+
+			if (ret != sizeof(UINT8))
+			{
+				_ftprintf_s(stderr, _T("ERROR! Incorrect return data in 'DeviceIoControl()'\n"));
+				continue;
+			}
+
+			_tprintf(_T("data: %hhx\n"), addressHolder.data);
+
 			continue;
 		}
 
 		if (!_tcscmp(cmd, _T("set")))
 		{
-			UINT8 addr, data;
-			_tscanf_s(_T("%hhx%hhx"), &addr, &data);
+			TCHAR addr[16] = { 0 };
+			_tscanf_s(_T("%s"), addr, (UINT)ARRAYSIZE(addr));
+			
+			TCHAR data[16] = { 0 };
+			_tscanf_s(_T("%s"), data, (UINT)ARRAYSIZE(data));
 
-			BOOLEAN verify = 0;
-			_tprintf(_T("Are you sure you want to change the value? (1/0): "));
-			_tscanf_s(_T("%hhu"), &verify);
+			PTCHAR correctNumb;
+			ADDRRES_HOLDER addressHolder;
 
-			if (verify)
+			addressHolder.addr = (UINT8)_tcstol(addr, &correctNumb, 16);
+			if (*correctNumb || addressHolder.addr > 0x3f)
 			{
-				_putts(_T("Data changed"));
-			#if FALSE
-				DWORD ret = 0;
-				CONST BOOL bResultDeviceIoControl = DeviceIoControl(
-					hDriver, SETTER,
-					&addr, sizeof addr,
-					&data, sizeof data,
-					&ret, NULL);
-			#endif
+				_tprintf(_T("Invalid address\n"));
+				continue;
 			}
+
+			addressHolder.data = (UINT8)_tcstol(data, &correctNumb, 16);
+			if (*correctNumb)
+			{
+				_tprintf(_T("Invalid data\n"));
+				continue;
+			}
+
+			DWORD ret;
+			if (!DeviceIoControl(
+				hDriver, SET_DATA_BY_ADDR,
+				&addressHolder, sizeof addressHolder,
+				NULL, 0,
+				&ret, NULL))
+			{
+				_ftprintf_s(stderr, _T("ERROR! 'DeviceIoControl()' code=%lu\n"), GetLastError());
+				return EXIT_FAILURE;
+			}
+
+			if (ret)
+			{
+				_ftprintf_s(stderr, _T("ERROR! Incorrect return data in 'DeviceIoControl()'\n"));
+			}
+
 			continue;
 		}
 
-		_putts(_T("Unknown command"));
-		_putts(_T("For help: 'help'"));
+		_tprintf(_T("Unknown command\n"));
+		_tprintf(_T("For help: 'hlp'\n"));
 	}
 
-	CloseHandle(hDriver);
 	return EXIT_SUCCESS;
 }
