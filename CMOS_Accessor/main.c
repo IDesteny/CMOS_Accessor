@@ -1,5 +1,6 @@
 #include <ntddk.h>
 #include <tchar.h>
+
 #include "OIctl.h"
 #include "AddrHolder.h"
 #include "DriverCfg.h"
@@ -34,8 +35,8 @@ NTSTATUS DeviceControlRoutine(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 
 			if (!addr)
 			{
-				ntStatusExitCode = STATUS_BUFFER_ALL_ZEROS;
 				ERRLOG("DeviceControlRoutine()");
+				ntStatusExitCode = STATUS_BUFFER_ALL_ZEROS;
 				break;
 			}
 
@@ -52,8 +53,8 @@ NTSTATUS DeviceControlRoutine(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 
 			if (!pAddressHolder)
 			{
-				ntStatusExitCode = STATUS_BUFFER_ALL_ZEROS;
 				ERRLOG("DeviceControlRoutine()");
+				ntStatusExitCode = STATUS_BUFFER_ALL_ZEROS;
 				break;
 			}
 
@@ -64,8 +65,8 @@ NTSTATUS DeviceControlRoutine(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 
 		default:
 		{
-			ntStatusExitCode = STATUS_INVALID_PARAMETER;
 			ERRLOG("DeviceControlRoutine()");
+			ntStatusExitCode = STATUS_INVALID_PARAMETER;
 		}
 	}
 
@@ -105,7 +106,8 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT pDriverObject, IN PUNICODE_STRING Registr
 	PDEVICE_OBJECT deviceObj;
 	NTSTATUS lastStatus = STATUS_SUCCESS;
 
-	lastStatus = IoCreateDevice(pDriverObject,
+	lastStatus = IoCreateDevice(
+		pDriverObject,
 		sizeof(UNICODE_STRING),
 		&deviceName,
 		FILE_DEVICE_UNKNOWN,
@@ -125,6 +127,7 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT pDriverObject, IN PUNICODE_STRING Registr
 	if (!NT_SUCCESS(lastStatus))
 	{
 		ERRLOG("IoCreateSymbolicLink()");
+		IoDeleteDevice(pDriverObject->DeviceObject);
 		return lastStatus;
 	}
 
