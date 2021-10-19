@@ -3,7 +3,7 @@
 
 typedef unsigned char BYTE;
 
-typedef struct _address_holder
+typedef struct _ADDRESS_HOLDER
 {
 	BYTE addr;
 	BYTE data;

@@ -154,8 +154,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AddrHolder.h" />
+    <ClInclude Include="DeviceExtension.h" />
     <ClInclude Include="DriverCfg.h" />
-    <ClInclude Include="OIctl.h" />
+    <ClInclude Include="IOctl.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

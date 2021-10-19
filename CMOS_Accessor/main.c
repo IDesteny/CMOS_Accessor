@@ -1,14 +1,15 @@
 #include <ntddk.h>
 #include <tchar.h>
 
-#include "OIctl.h"
+#include "IOctl.h"
 #include "AddrHolder.h"
 #include "DriverCfg.h"
+#include "DeviceExtension.h"
 
 #define ERRLOG(msg) DbgPrint("ERROR! ===" msg "===")
 
 #define DEVICE_PATH _T("\\Device\\") DEVICE_NAME
-#define	SYM_LINK_NAME _T("\\DosDevices\\") DEVICE_NAME
+#define SYM_LINK_NAME _T("\\DosDevices\\") DEVICE_NAME
 
 
 NTSTATUS CompleteIrp(IN PIRP pIrp, IN NTSTATUS ntStatus, IN ULONG info)
@@ -85,16 +86,17 @@ NTSTATUS CloseFileRoutine(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 
 VOID UnloadRoutine(IN PDRIVER_OBJECT pDriverObject)
 {
-	if (!NT_SUCCESS(IoDeleteSymbolicLink(pDriverObject->DeviceObject->DeviceExtension)))
-	{
-		ERRLOG("IoDeleteSymbolicLink()");
-	}
+	PDEVICE_EXTENSION pDeviceExtension = pDriverObject->DeviceObject->DeviceExtension;
 
+	IoDeleteSymbolicLink(&pDeviceExtension->symbolicLink);
 	IoDeleteDevice(pDriverObject->DeviceObject);
 }
 
 NTSTATUS DriverEntry(IN PDRIVER_OBJECT pDriverObject, IN PUNICODE_STRING RegistryPath)
 {
+	if (!pDriverObject)
+		return STATUS_BUFFER_ALL_ZEROS;
+
 	pDriverObject->MajorFunction[IRP_MJ_CREATE] = CreateFileRoutine;
 	pDriverObject->MajorFunction[IRP_MJ_CLOSE] = CloseFileRoutine;
 	pDriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = DeviceControlRoutine;
@@ -103,33 +105,39 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT pDriverObject, IN PUNICODE_STRING Registr
 	UNICODE_STRING deviceName;
 	RtlInitUnicodeString(&deviceName, DEVICE_PATH);
 
+	NTSTATUS returnStatus;
 	PDEVICE_OBJECT deviceObj;
-	NTSTATUS lastStatus = STATUS_SUCCESS;
 
-	lastStatus = IoCreateDevice(
+	returnStatus = IoCreateDevice(
 		pDriverObject,
-		sizeof(UNICODE_STRING),
+		sizeof(DEVICE_EXTENSION),
 		&deviceName,
 		FILE_DEVICE_UNKNOWN,
 		0,
 		FALSE,
 		&deviceObj);
 
-	if (!NT_SUCCESS(lastStatus))
-	{
-		ERRLOG("IoCreateDevice()");
-		return lastStatus;
-	}
+	if (!NT_SUCCESS(returnStatus))
+		return returnStatus;
+
+	if (!deviceObj)
+		return STATUS_BUFFER_ALL_ZEROS;
 	
-	RtlInitUnicodeString(deviceObj->DeviceExtension, SYM_LINK_NAME);
-
-	lastStatus = IoCreateSymbolicLink(deviceObj->DeviceExtension, &deviceName);
-	if (!NT_SUCCESS(lastStatus))
+	PDEVICE_EXTENSION pDeviceExtension = deviceObj->DeviceExtension;
+	if (!pDeviceExtension)
 	{
-		ERRLOG("IoCreateSymbolicLink()");
-		IoDeleteDevice(pDriverObject->DeviceObject);
-		return lastStatus;
+		IoDeleteDevice(deviceObj);
+		return STATUS_BUFFER_ALL_ZEROS;
 	}
 
-	return lastStatus;
+	RtlInitUnicodeString(&pDeviceExtension->symbolicLink, SYM_LINK_NAME);
+
+	returnStatus = IoCreateSymbolicLink(&pDeviceExtension->symbolicLink, &deviceName);
+	if (!NT_SUCCESS(returnStatus))
+	{
+		IoDeleteDevice(deviceObj);
+		return returnStatus;
+	}
+
+	return STATUS_SUCCESS;
 }

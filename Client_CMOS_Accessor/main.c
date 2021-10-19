@@ -2,7 +2,7 @@
 #include <tchar.h>
 #include <stdio.h>
 
-#include "..\CMOS_Accessor\OIctl.h"
+#include "..\CMOS_Accessor\IOctl.h"
 #include "..\CMOS_Accessor\AddrHolder.h"
 #include "..\CMOS_Accessor\DriverCfg.h"
 
@@ -64,18 +64,20 @@ INT WINAPI _tmain(INT argc, LPCTSTR argv[])
 			ADDRRES_HOLDER addressHolder;
 
 			addressHolder.addr = (UINT8)_tcstol(addr, &correctAddr, 16);
-			if (*correctAddr || addressHolder.addr > 0x3f)
+			if ((correctAddr && *correctAddr) || addressHolder.addr > 0x3f)
 			{
 				_tprintf(_T("Invalid address\n"));
 				continue;
 			}
 
 			DWORD ret;
-			if (!DeviceIoControl(
+			BOOL res = DeviceIoControl(
 				hDriver, GET_DATA_BY_ADDR,
 				&addressHolder.addr, sizeof addressHolder.addr,
 				&addressHolder.data, sizeof addressHolder.data,
-				&ret, NULL))
+				&ret, NULL);
+
+			if (!res)
 			{
 				_ftprintf_s(stderr, _T("ERROR! 'DeviceIoControl()' code=%lu\n"), GetLastError());
 				return EXIT_FAILURE;
@@ -104,25 +106,27 @@ INT WINAPI _tmain(INT argc, LPCTSTR argv[])
 			ADDRRES_HOLDER addressHolder;
 
 			addressHolder.addr = (UINT8)_tcstol(addr, &correctNumb, 16);
-			if (*correctNumb || addressHolder.addr > 0x3f)
+			if ((correctNumb && *correctNumb) || addressHolder.addr > 0x3f)
 			{
 				_tprintf(_T("Invalid address\n"));
 				continue;
 			}
 
 			addressHolder.data = (UINT8)_tcstol(data, &correctNumb, 16);
-			if (*correctNumb)
+			if ((correctNumb && *correctNumb))
 			{
 				_tprintf(_T("Invalid data\n"));
 				continue;
 			}
 
 			DWORD ret;
-			if (!DeviceIoControl(
+			BOOL res = DeviceIoControl(
 				hDriver, SET_DATA_BY_ADDR,
 				&addressHolder, sizeof addressHolder,
 				NULL, 0,
-				&ret, NULL))
+				&ret, NULL);
+
+			if (!res)
 			{
 				_ftprintf_s(stderr, _T("ERROR! 'DeviceIoControl()' code=%lu\n"), GetLastError());
 				return EXIT_FAILURE;

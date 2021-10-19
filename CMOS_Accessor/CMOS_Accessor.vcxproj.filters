@@ -24,13 +24,16 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="OIctl.h">
+    <ClInclude Include="IOctl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="AddrHolder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DriverCfg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DeviceExtension.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
