@@ -11,8 +11,9 @@
 #define DEVICE_PATH _T("\\Device\\") DEVICE_NAME
 #define SYM_LINK_NAME _T("\\DosDevices\\") DEVICE_NAME
 
+#pragma warning(disable: 5045) //Disable Spectre
 
-NTSTATUS CompleteIrp(IN PIRP pIrp, IN NTSTATUS ntStatus, IN ULONG info)
+inline NTSTATUS CompleteIrp(IN PIRP pIrp, IN NTSTATUS ntStatus, IN ULONG info)
 {
 	pIrp->IoStatus.Status = ntStatus;
 	pIrp->IoStatus.Information = info;
@@ -23,6 +24,8 @@ NTSTATUS CompleteIrp(IN PIRP pIrp, IN NTSTATUS ntStatus, IN ULONG info)
 
 NTSTATUS DeviceControlRoutine(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 {
+	(VOID)pDeviceObject;
+
 	PIO_STACK_LOCATION pIrpStack = IoGetCurrentIrpStackLocation(pIrp);
 	ULONG controlCode = pIrpStack->Parameters.DeviceIoControl.IoControlCode;
 	NTSTATUS ntStatusExitCode = STATUS_SUCCESS;
@@ -76,11 +79,13 @@ NTSTATUS DeviceControlRoutine(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 
 NTSTATUS CreateFileRoutine(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 {
+	(VOID)pDeviceObject;
 	return CompleteIrp(pIrp, STATUS_SUCCESS, 0);
 }
 
 NTSTATUS CloseFileRoutine(IN PDEVICE_OBJECT pDeviceObject, IN PIRP pIrp)
 {
+	(VOID)pDeviceObject;
 	return CompleteIrp(pIrp, STATUS_SUCCESS, 0);
 }
 
@@ -94,6 +99,8 @@ VOID UnloadRoutine(IN PDRIVER_OBJECT pDriverObject)
 
 NTSTATUS DriverEntry(IN PDRIVER_OBJECT pDriverObject, IN PUNICODE_STRING RegistryPath)
 {
+	(VOID)RegistryPath;
+
 	if (!pDriverObject)
 		return STATUS_BUFFER_ALL_ZEROS;
 

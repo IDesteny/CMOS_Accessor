@@ -9,7 +9,7 @@
 #define DEVICE_PATH _T("\\\\.\\") DEVICE_NAME
 
 
-INT WINAPI _tmain(INT argc, LPCTSTR argv[])
+INT _tmain(VOID)
 {
 	HANDLE hDriver = CreateFile(
 		DEVICE_PATH,
